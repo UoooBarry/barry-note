@@ -10,13 +10,15 @@ export interface Note {
 
 export const getAllNotes = async (): Promise<[Note]> => {
   const response = await axios.get(PAGE_URL);
-  const content = response.data;
-  return content.map((item: Note) => {
-    return {
-      _id: item._id,
-      title: item.title,
-      type: item.type,
-      content: item.content
-    };
-  });
+  return response.data.pages;
+}
+
+export const insertNote = async (note: Note): Promise<Note> => {
+  const response = await axios.post(PAGE_URL, note);
+  return response.data.page;
+}
+
+export const findNote = async (id: string): Promise<Note> => {
+  const response = await axios.get(`${PAGE_URL}/${id}`);
+  return response.data.page;
 }
