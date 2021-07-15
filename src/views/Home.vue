@@ -19,7 +19,6 @@ export default defineComponent({
     const route = useRoute();
     const id = route.params.id;
     const note = computed(() => store.getters['note/findNote'](id));
-
     return {
       note
     }
