@@ -6,13 +6,22 @@
       :editor="editor"
       v-if="editor && !isPresentation"
     >
-      <button @click="editor.chain().focus().toggleBold().run()" :class="{ 'is-active': editor.isActive('bold') }">
+      <button
+        @click="editor.chain().focus().toggleBold().run()"
+        :class="{ 'is-active': editor.isActive('bold') }"
+      >
         Bold
       </button>
-      <button @click="editor.chain().focus().toggleItalic().run()" :class="{ 'is-active': editor.isActive('italic') }">
+      <button
+        @click="editor.chain().focus().toggleItalic().run()"
+        :class="{ 'is-active': editor.isActive('italic') }"
+      >
         Italic
       </button>
-      <button @click="editor.chain().focus().toggleStrike().run()" :class="{ 'is-active': editor.isActive('strike') }">
+      <button
+        @click="editor.chain().focus().toggleStrike().run()"
+        :class="{ 'is-active': editor.isActive('strike') }"
+      >
         Strike
       </button>
     </bubble-menu>
@@ -23,35 +32,48 @@
       :editor="editor"
       v-if="editor && !isPresentation"
     >
-      <button @click="editor.chain().focus().toggleHeading({ level: 1 }).run()" :class="{ 'is-active': editor.isActive('heading', { level: 1 }) }">
+      <button
+        @click="editor.chain().focus().toggleHeading({ level: 1 }).run()"
+        :class="{ 'is-active': editor.isActive('heading', { level: 1 }) }"
+      >
         H1
       </button>
-      <button @click="editor.chain().focus().toggleHeading({ level: 2 }).run()" :class="{ 'is-active': editor.isActive('heading', { level: 2 }) }">
+      <button
+        @click="editor.chain().focus().toggleHeading({ level: 2 }).run()"
+        :class="{ 'is-active': editor.isActive('heading', { level: 2 }) }"
+      >
         H2
       </button>
-      <button @click="editor.chain().focus().toggleBulletList().run()" :class="{ 'is-active': editor.isActive('bulletList') }">
+      <button
+        @click="editor.chain().focus().toggleBulletList().run()"
+        :class="{ 'is-active': editor.isActive('bulletList') }"
+      >
         Bullet List
       </button>
     </floating-menu>
-    <EditorContent
-      :editor="editor"
-      class="floating-menu"
-    />
+    <EditorContent :editor="editor" class="floating-menu" />
   </div>
 </template>
 
 <script lang="ts">
-import { useEditor, EditorContent, BubbleMenu, FloatingMenu } from "@tiptap/vue-3";
+import {
+  useEditor,
+  EditorContent,
+  BubbleMenu,
+  FloatingMenu,
+} from "@tiptap/vue-3";
 import { Extension } from "@tiptap/core";
-import Document from '@tiptap/extension-document'
-import Paragraph from '@tiptap/extension-paragraph'
-import Typography from '@tiptap/extension-typography'
+import Document from "@tiptap/extension-document";
+import Paragraph from "@tiptap/extension-paragraph";
+import Typography from "@tiptap/extension-typography";
 // import { Heading, TodoItem, TodoList } from 'tiptap-extensions'
 import StarterKit from "@tiptap/starter-kit";
 import { defineComponent, toRefs } from "@vue/runtime-core";
 import { Note } from "../api/noteApi";
 import { useStore } from "vuex";
-import { useRouter, useRoute } from 'vue-router';
+import { useRouter, useRoute } from "vue-router";
+import { createToast } from "mosha-vue-toastify";
+import "mosha-vue-toastify/dist/style.css";
 
 export default defineComponent({
   name: "Note",
@@ -66,36 +88,60 @@ export default defineComponent({
     const router = useRouter();
     const store = useStore();
     const noteContent = toRefs(props.note);
-    const isPresentation = useRoute().query.presentation === 'true' ? true:  false;
+    const isPresentation =
+      useRoute().query.presentation === "true" ? true : false;
+    const saveSuccess = () => {
+      createToast("Sucessfully saved!", {
+        type: "success",
+        position: "bottom-right",
+      });
+    };
+    const saveFail = () => {
+      createToast("Fail to save!", {
+        type: "danger",
+        position: "bottom-right",
+      });
+    };
     const Saveable = Extension.create({
       onFocus({ event }) {
         if (event && event.target) {
-          event.target.addEventListener(
-            "keydown",
-            (keydownEvent: any) => {
-              if (
-                keydownEvent.keyCode == 83 &&
-                (keydownEvent.ctrlKey || keydownEvent.metaKey)
-              ) {
-                keydownEvent.preventDefault();
-                if(!editor || !editor.value) {return;}
-                
-                let newNote = props.note;
-                if(newNote.title === "new") {
-                  const title = editor.value.getHTML().split("</h1>")[0].substr(4);
-                  newNote.title = title;
-                  newNote.content = editor.value.getHTML();
-                  store.dispatch("note/saveNote", newNote).then((returnNote) => {
-                    console.log(returnNote)
-                    router.push({path: `/notes/${returnNote._id}`});
+          event.target.addEventListener("keydown", (keydownEvent: any) => {
+            if (
+              keydownEvent.keyCode == 83 &&
+              (keydownEvent.ctrlKey || keydownEvent.metaKey)
+            ) {
+              keydownEvent.preventDefault();
+              if (!editor || !editor.value) {
+                return;
+              }
+
+              let newNote = props.note;
+              if (newNote.title === "new") {
+                const title = editor.value
+                  .getHTML()
+                  .split("</h1>")[0]
+                  .substr(4);
+                newNote.title = title;
+                newNote.content = editor.value.getHTML();
+
+                store
+                  .dispatch("note/saveNote", newNote)
+                  .then((returnNote) => {
+                    router.push({ path: `/notes/${returnNote._id}` });
+                  })
+                  .catch(() => {
+                    saveFail();
                   });
-                }else{
-                  newNote.content = editor.value.getHTML();
-                  store.dispatch("note/updateNote", newNote);
-                }
+                saveSuccess();
+              } else {
+                newNote.content = editor.value.getHTML();
+                store
+                  .dispatch("note/updateNote", newNote)
+                  .then(() => saveSuccess())
+                  .catch(() => saveFail());
               }
             }
-          );
+          });
         }
       },
     });
@@ -113,7 +159,7 @@ export default defineComponent({
     return {
       noteContent,
       editor,
-      isPresentation
+      isPresentation,
     };
   },
 });
@@ -148,20 +194,20 @@ export default defineComponent({
 
   blockquote {
     padding-left: 1rem;
-    border-left: 2px solid rgba(#0D0D0D, 0.1);
+    border-left: 2px solid rgba(#0d0d0d, 0.1);
   }
 }
 
 .bubble-menu {
   display: flex;
-  background-color: #0D0D0D;
+  background-color: #0d0d0d;
   padding: 0.2rem;
   border-radius: 0.2rem;
 
   button {
     border: none;
     background: none;
-    color: #FFF;
+    color: #fff;
     font-size: 0.85rem;
     font-weight: 500;
     padding: 0 0.2rem;
