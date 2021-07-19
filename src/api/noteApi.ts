@@ -1,5 +1,5 @@
 import axios from 'axios';
-const PAGE_URL = "http://localhost:3000/api/v1/pages";
+const PAGE_URL = process.env.VUE_APP_NOT_PAGE_URL || "http://localhost:3000/api/v1/pages/";
 
 export interface Note {
   _id?: String;

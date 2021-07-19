@@ -93,6 +93,11 @@ export default defineComponent({
 </style>
 
 <style>
+@font-face {
+  font-family: "MonoLisa";
+  src: local("Merienda"),
+   url("./assets/fonts/MonoLisa-Regular.ttf") format("truetype");
+}
 body {
   font-family: "MonoLisa"
 }

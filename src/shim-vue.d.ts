@@ -5,3 +5,5 @@ declare module "*.vue" {
 }
 
 declare module 'tiptap-extensions';
+declare module 'tiptap-extension-superscript';
+declare module 'tiptap';

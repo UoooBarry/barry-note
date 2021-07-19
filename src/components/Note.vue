@@ -51,7 +51,7 @@
         Bullet List
       </button>
     </floating-menu>
-    <EditorContent :editor="editor" class="floating-menu" />
+    <EditorContent :editor="editor" class="floating-menu" v-if="editor" />
   </div>
 </template>
 
@@ -102,47 +102,50 @@ export default defineComponent({
         position: "bottom-right",
       });
     };
+
+    const save = (keydownEvent: any) => {
+      if (
+        keydownEvent.keyCode == 83 &&
+        (keydownEvent.ctrlKey || keydownEvent.metaKey)
+      ) {
+        keydownEvent.preventDefault();
+        if (!editor || !editor.value) {
+          return;
+        }
+
+        let newNote = props.note;
+
+        const title = editor.value.getHTML().split("</h1>")[0].substr(4);
+        newNote.title = title;
+        newNote.content = editor.value.getHTML();
+        if (newNote.title === "new") {
+          store
+            .dispatch("note/saveNote", newNote)
+            .then((returnNote) => {
+              router.push({ path: `/notes/${returnNote._id}` });
+            })
+            .catch(() => {
+              saveFail();
+            });
+          saveSuccess();
+        } else {
+          newNote.content = editor.value.getHTML();
+          store
+            .dispatch("note/updateNote", newNote)
+            .then(() => saveSuccess())
+            .catch(() => saveFail());
+        }
+      }
+    };
+
     const Saveable = Extension.create({
       onFocus({ event }) {
         if (event && event.target) {
-          event.target.addEventListener("keydown", (keydownEvent: any) => {
-            if (
-              keydownEvent.keyCode == 83 &&
-              (keydownEvent.ctrlKey || keydownEvent.metaKey)
-            ) {
-              keydownEvent.preventDefault();
-              if (!editor || !editor.value) {
-                return;
-              }
-
-              let newNote = props.note;
-              if (newNote.title === "new") {
-                const title = editor.value
-                  .getHTML()
-                  .split("</h1>")[0]
-                  .substr(4);
-                newNote.title = title;
-                newNote.content = editor.value.getHTML();
-
-                store
-                  .dispatch("note/saveNote", newNote)
-                  .then((returnNote) => {
-                    router.push({ path: `/notes/${returnNote._id}` });
-                  })
-                  .catch(() => {
-                    saveFail();
-                  });
-                saveSuccess();
-              } else {
-                newNote.content = editor.value.getHTML();
-                store
-                  .dispatch("note/updateNote", newNote)
-                  .then(() => saveSuccess())
-                  .catch(() => saveFail());
-              }
-            }
-          });
+          // Remove before create to prevent duplicated
+          event.target.removeEventListener("keydown", save);
+          event.target.addEventListener("keydown", save);
         }
+        return;
       },
     });
 
